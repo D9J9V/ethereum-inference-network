@@ -1,6 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import type { Model } from "./model-dropdown"
+
+export { type Model }
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ChevronDown } from "lucide-react"
@@ -9,37 +12,35 @@ interface Model {
   id: string
   name: string
   author: string
+  provider: 'asi' | 'openrouter'
+  modelPath?: string
   isNew?: boolean
   isFree?: boolean
 }
 
 const models: Model[] = [
-  { id: "asi-1", name: "ASI-1", author: "Artificial Superintelligence Alliance", isNew: true },
-  { id: "claude-sonnet-4", name: "Claude Sonnet 4", author: "Anthropic" },
-  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", author: "Google" },
-  { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash", author: "Google" },
-  {
-    id: "deepseek-v3-free",
-    name: "DeepSeek V3 0324 (free)",
-    author: "DeepSeek",
-    isFree: true,
-  },
-  { id: "deepseek-v3", name: "DeepSeek V3 0324", author: "DeepSeek" },
-  { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", author: "Google" },
-  { id: "claude-3.7-sonnet", name: "Claude 3.7 Sonnet", author: "Anthropic" },
-  { id: "qwen3-coder", name: "Qwen3 Coder", author: "Qwen", isNew: true },
-  { id: "r1-0528-free", name: "R1 0528 (free)", author: "DeepSeek", isFree: true },
-  {
-    id: "qwen3-coder-free",
-    name: "Qwen3 Coder (free)",
-    author: "Qwen",
-    isNew: true,
-    isFree: true,
-  },
+  { id: "llama3.1-8b", name: "Llama 3.1 8B", author: "ASI", provider: 'asi', isNew: true },
+  { id: "llama3.1-70b", name: "Llama 3.1 70B", author: "ASI", provider: 'asi' },
+  { id: "openai/gpt-4", name: "GPT-4", author: "OpenAI", provider: 'openrouter', modelPath: "openai/gpt-4" },
+  { id: "anthropic/claude-3-opus", name: "Claude 3 Opus", author: "Anthropic", provider: 'openrouter', modelPath: "anthropic/claude-3-opus" },
+  { id: "google/gemini-pro", name: "Gemini Pro", author: "Google", provider: 'openrouter', modelPath: "google/gemini-pro" },
+  { id: "meta-llama/llama-2-70b-chat", name: "Llama 2 70B Chat", author: "Meta", provider: 'openrouter', modelPath: "meta-llama/llama-2-70b-chat" },
+  { id: "mistralai/mixtral-8x7b", name: "Mixtral 8x7B", author: "Mistral AI", provider: 'openrouter', modelPath: "mistralai/mixtral-8x7b" },
+  { id: "deepseek/deepseek-chat", name: "DeepSeek Chat", author: "DeepSeek", provider: 'openrouter', modelPath: "deepseek/deepseek-chat", isFree: true },
+  { id: "qwen/qwen-2-72b-instruct", name: "Qwen 2 72B", author: "Qwen", provider: 'openrouter', modelPath: "qwen/qwen-2-72b-instruct", isNew: true },
 ]
 
-export function ModelDropdown() {
+interface ModelDropdownProps {
+  onModelChange?: (model: Model) => void
+}
+
+export function ModelDropdown({ onModelChange }: ModelDropdownProps) {
   const [selectedModel, setSelectedModel] = useState(models[0])
+
+  const handleModelSelect = (model: Model) => {
+    setSelectedModel(model)
+    onModelChange?.(model)
+  }
 
   return (
     <DropdownMenu>
@@ -57,7 +58,7 @@ export function ModelDropdown() {
         {models.map((model) => (
           <DropdownMenuItem
             key={model.id}
-            onClick={() => setSelectedModel(model)}
+            onClick={() => handleModelSelect(model)}
             className="flex items-center justify-between p-3 cursor-pointer"
           >
             <div className="flex flex-col gap-1">
