@@ -6,9 +6,10 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { Send, Bot, User, Settings } from "lucide-react"
+import { Send, Bot, User, Settings, Loader2 } from "lucide-react"
 import { ChatSidebar } from "./chat-sidebar"
 import { ModelDropdown } from "./model-dropdown"
+import type { Model } from "./model-dropdown"
 
 interface Message {
   id: string
@@ -28,9 +29,11 @@ export function ChatInterface() {
   ])
   const [inputValue, setInputValue] = useState("")
   const [activeChat, setActiveChat] = useState("1")
+  const [selectedModel, setSelectedModel] = useState<Model | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSendMessage = () => {
-    if (!inputValue.trim()) return
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || isLoading) return
 
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -40,18 +43,84 @@ export function ChatInterface() {
     }
 
     setMessages((prev) => [...prev, newMessage])
+    const currentInput = inputValue
     setInputValue("")
+    setIsLoading(true)
 
-    // Simulate assistant response (placeholder for actual logic)
-    setTimeout(() => {
+    try {
+      // Prepare messages for API
+      const apiMessages = [...messages, newMessage].map(msg => ({
+        role: msg.sender === "user" ? "user" as const : "assistant" as const,
+        content: msg.content
+      }))
+
+      // Determine provider and model
+      const provider = selectedModel?.provider || 'asi'
+      const model = selectedModel?.modelPath || selectedModel?.id || 'llama3.1-8b'
+
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          provider,
+          model,
+          messages: apiMessages,
+          temperature: 0.7,
+          max_tokens: 1000,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to get response')
+      }
+
+      const data = await response.json()
+      
+      // Extract content based on response format
+      let assistantContent = ''
+      if (data.choices && data.choices.length > 0) {
+        const choice = data.choices[0]
+        // Handle chat/completions format
+        if (choice.message && choice.message.content) {
+          assistantContent = choice.message.content
+        }
+        // Handle completions format
+        else if (choice.text) {
+          assistantContent = choice.text
+        }
+      }
+
+      if (!assistantContent) {
+        throw new Error('No response content received')
+      }
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: "I understand your message. This is where the AI logic would process your request.",
+        content: assistantContent,
         sender: "assistant",
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, assistantMessage])
-    }, 1000)
+      
+      // Log payment info if present
+      if (data.payment) {
+        console.log('Payment info:', data.payment)
+      }
+    } catch (error) {
+      console.error('Error sending message:', error)
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: `Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
+        sender: "assistant",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -87,7 +156,7 @@ export function ChatInterface() {
             </div>
             <div>
               <h1 className="text-lg font-semibold text-foreground">Ethereum Inference Network</h1>
-              <ModelDropdown />
+              <ModelDropdown onModelChange={setSelectedModel} />
             </div>
           </div>
           {/* Settings Button */}
@@ -152,10 +221,14 @@ export function ChatInterface() {
             />
             <Button
               onClick={handleSendMessage}
-              disabled={!inputValue.trim()}
+              disabled={!inputValue.trim() || isLoading}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              <Send className="w-4 h-4" />
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
             </Button>
           </div>
         </div>
