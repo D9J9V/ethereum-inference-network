@@ -1,13 +1,14 @@
 "use client"
 
 import type React from "react"
-
+import Link from "next/link"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { Send, Bot, User } from "lucide-react"
+import { Send, Bot, User, Settings } from "lucide-react"
 import { ChatSidebar } from "./chat-sidebar"
+import { ModelDropdown } from "./model-dropdown"
 
 interface Message {
   id: string
@@ -79,14 +80,22 @@ export function ChatInterface() {
 
       <div className="flex flex-col flex-1 max-w-4xl bg-background">
         {/* Header */}
-        <div className="flex items-center gap-3 p-4 border-b border-border bg-card">
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary">
-            <Bot className="w-5 h-5 text-primary-foreground" />
+        <div className="flex items-center justify-between p-4 border-b border-border bg-card">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary">
+              <Bot className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-foreground">Ethereum Inference Network</h1>
+              <ModelDropdown />
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold text-foreground">Ethereum Inference Network</h1>
-            <p className="text-sm text-muted-foreground">ASI-1</p>
-          </div>
+          {/* Settings Button */}
+          <Link href="/settings">
+            <Button variant="ghost" size="sm">
+              <Settings className="w-4 h-4" />
+            </Button>
+          </Link>
         </div>
 
         {/* Messages Container */}

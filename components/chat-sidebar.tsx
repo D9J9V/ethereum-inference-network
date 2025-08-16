@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Plus, MessageSquare, MoreHorizontal } from "lucide-react"
+import { Plus, MessageSquare, MoreHorizontal, ChevronLeft, ChevronRight } from "lucide-react"
 
 interface Chat {
   id: string
@@ -18,6 +18,8 @@ interface ChatSidebarProps {
 }
 
 export function ChatSidebar({ activeChat, onChatSelect }: ChatSidebarProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false)
+
   const [chats] = useState<Chat[]>([
     {
       id: "1",
@@ -40,13 +42,27 @@ export function ChatSidebar({ activeChat, onChatSelect }: ChatSidebarProps) {
   ])
 
   return (
-    <div className="w-80 h-screen bg-card border-r border-border flex flex-col">
+    <div
+      className={`${isCollapsed ? "w-16" : "w-80"} h-screen bg-card border-r border-border flex flex-col transition-all duration-300`}
+    >
       {/* Sidebar Header */}
       <div className="p-4 border-b border-border">
-        <Button className="w-full justify-start gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
-          <Plus className="w-4 h-4" />
-          New Chat
-        </Button>
+        <div className="flex items-center gap-2">
+          {!isCollapsed ? (
+            <Button className="flex-1 justify-start gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Plus className="w-4 h-4" />
+              New Chat
+            </Button>
+          ) : (
+            <Button className="w-8 h-8 p-0 bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Plus className="w-4 h-4" />
+            </Button>
+          )}
+
+          <Button variant="ghost" size="sm" className="w-8 h-8 p-0" onClick={() => setIsCollapsed(!isCollapsed)}>
+            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </Button>
+        </div>
       </div>
 
       {/* Chat List */}
@@ -59,28 +75,36 @@ export function ChatSidebar({ activeChat, onChatSelect }: ChatSidebarProps) {
             }`}
             onClick={() => onChatSelect(chat.id)}
           >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <MessageSquare className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-medium text-foreground truncate">{chat.title}</h3>
-                  <p className="text-xs text-muted-foreground truncate mt-1">{chat.lastMessage}</p>
+            {!isCollapsed ? (
+              <>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <MessageSquare className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-medium text-foreground truncate">{chat.title}</h3>
+                      <p className="text-xs text-muted-foreground truncate mt-1">{chat.lastMessage}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-6 h-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-accent"
+                  >
+                    <MoreHorizontal className="w-3 h-3" />
+                  </Button>
                 </div>
+                <div className="text-xs text-muted-foreground mt-2">
+                  {chat.timestamp.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-center">
+                <MessageSquare className="w-4 h-4 text-muted-foreground" />
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-6 h-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-accent"
-              >
-                <MoreHorizontal className="w-3 h-3" />
-              </Button>
-            </div>
-            <div className="text-xs text-muted-foreground mt-2">
-              {chat.timestamp.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </div>
+            )}
           </Card>
         ))}
       </div>
