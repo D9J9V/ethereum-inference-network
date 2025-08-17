@@ -19,8 +19,9 @@ interface Model {
 }
 
 const models: Model[] = [
-  { id: "llama3.1-8b", name: "Llama 3.1 8B", author: "ASI", provider: 'asi', isNew: true },
-  { id: "llama3.1-70b", name: "Llama 3.1 70B", author: "ASI", provider: 'asi' },
+  // ASI models - using correct ASI API model names
+  { id: "asi1-mini", name: "ASI1 Mini", author: "ASI", provider: 'asi', isNew: true },
+  { id: "asi1", name: "ASI1", author: "ASI", provider: 'asi' },
   { id: "openai/gpt-4", name: "GPT-4", author: "OpenAI", provider: 'openrouter', modelPath: "openai/gpt-4" },
   { id: "anthropic/claude-3-opus", name: "Claude 3 Opus", author: "Anthropic", provider: 'openrouter', modelPath: "anthropic/claude-3-opus" },
   { id: "google/gemini-pro", name: "Gemini Pro", author: "Google", provider: 'openrouter', modelPath: "google/gemini-pro" },

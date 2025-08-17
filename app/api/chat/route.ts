@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const account = await getWalletAccount();
 
     // Determinar la URL base del backend
-    const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
+    const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'https://ethereum-inference-network.vercel.app';
 
     // Crear instancia axios con interceptor de pago
     const api = withPaymentInterceptor(
@@ -55,25 +55,32 @@ export async function POST(request: NextRequest) {
     let requestBody: any;
 
     if (provider === 'asi') {
+      // ASI endpoint expects the path exactly as shown in backend
       endpoint = '/api/asi/chat/completions';
       requestBody = {
-        model: model || 'llama3.1-8b',
+        model: model || 'asi1-mini',  // Use correct ASI model name
         messages,
+        stream: false,  // ASI API requires stream parameter
         ...options
       };
     } else if (provider === 'openrouter') {
+      // OpenRouter uses dynamic route with provider/model in the path
       if (!model || !model.includes('/')) {
         return NextResponse.json(
           { error: "Model must be in format 'provider/model' for OpenRouter" },
           { status: 400 },
         );
       }
-      const [providerName, modelName] = model.split('/');
-      endpoint = `/api/open-router/chat-completion/${providerName}/${modelName}`;
+      // Split the model into provider and model name for the URL path
+      const modelParts = model.split('/');
+      const providerName = modelParts[0];
+      const modelName = modelParts.slice(1).join('/'); // Handle cases like "meta-llama/llama-2-70b-chat"
+      
+      endpoint = `/api/open-router/chat-completion/${providerName}/${encodeURIComponent(modelName)}`;
       requestBody = {
-        model,
         messages,
         ...options
+        // Note: backend will add the model field itself
       };
     } else {
       return NextResponse.json(
@@ -83,6 +90,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Hacer solicitud a la API del backend
+    console.log('Calling backend API:', {
+      baseURL: backendBaseUrl,
+      endpoint,
+      fullURL: `${backendBaseUrl}${endpoint}`,
+      requestBody
+    });
     const response = await api.post(endpoint, requestBody);
 
     // Decodificar respuesta de pago si está presente
